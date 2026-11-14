@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+elasticsearch[async]
+pydantic-settings
+python-dotenv
