@@ -1,10 +1,11 @@
+
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from config import settings
 from logger import get_logger
-from es import connect_es, close_es
+from db.es import connect_es, close_es, get_es
 
 logger = get_logger(__name__)
 
@@ -16,11 +17,11 @@ async def lifespan(app: FastAPI):
 
     await connect_es()
 
-    yield
-
-    await close_es()
-
-    logger.info("Shutting down LogMind")
+    try:
+        yield
+    finally:
+        await close_es()
+        logger.info("Shutting down LogMind")
 
 
 app = FastAPI(
@@ -37,3 +38,27 @@ async def health():
         "status": "running",
         "application": settings.APP_NAME
     }
+
+
+@app.get("/ready")
+async def readiness():
+
+    try:
+        es = get_es()
+        await es.info()
+
+        return {
+            "status": "ready",
+            "elasticsearch": "connected"
+        }
+
+    except Exception:
+        logger.exception("Readiness check failed")
+
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not_ready",
+                "elasticsearch": "unavailable"
+            }
+        )
