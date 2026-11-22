@@ -5,8 +5,11 @@ from fastapi import FastAPI, HTTPException
 
 from config import settings
 from logger import get_logger
+
 from db.es import connect_es, close_es, get_es
 from db.index import create_log_index
+
+from controllers.ingestion_controller import router as ingestion_router
 
 logger = get_logger(__name__)
 
@@ -21,7 +24,6 @@ async def lifespan(app: FastAPI):
     try:
         es = get_es()
 
-        # Ensure the log index exists before accepting requests
         await create_log_index(es)
 
         yield
@@ -36,6 +38,10 @@ app = FastAPI(
     debug=settings.DEBUG,
     lifespan=lifespan
 )
+
+
+# Register API controllers
+app.include_router(ingestion_router)
 
 
 @app.get("/health")
