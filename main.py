@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from config import settings
 from logger import get_logger
 from db.es import connect_es, close_es, get_es
+from db.index import create_log_index
 
 logger = get_logger(__name__)
 
@@ -18,7 +19,13 @@ async def lifespan(app: FastAPI):
     await connect_es()
 
     try:
+        es = get_es()
+
+        # Ensure the log index exists before accepting requests
+        await create_log_index(es)
+
         yield
+
     finally:
         await close_es()
         logger.info("Shutting down LogMind")
