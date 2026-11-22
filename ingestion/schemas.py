@@ -79,3 +79,18 @@ class LogEvent(BaseModel):
             raise ValueError("Timestamp must include timezone information")
 
         return value.astimezone(timezone.utc)
+
+
+
+
+class BatchLogRequest(BaseModel):
+    events: list[LogEvent] = Field(
+        min_length=1,
+        max_length=500
+    )
+
+
+class IngestionResponse(BaseModel):
+    accepted: int
+    failed: int
+    errors: list[dict[str, Any]] = Field(default_factory=list)

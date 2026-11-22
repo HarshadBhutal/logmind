@@ -3,3 +3,5 @@ uvicorn[standard]
 elasticsearch[async]
 pydantic-settings
 python-dotenv
+pytest
+httpx
